@@ -1,0 +1,9 @@
+version: '3.8'
+
+services:
+  app:
+    image: twotiewapp.azurecr.io/tow-tier-app:latest
+    container_name: tow-tier-app
+    ports:
+      - "8080:8080"
+    restart: always
