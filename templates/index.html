@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Todo App</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        /* Auth Screen */
+        .auth-container {
+            max-width: 400px;
+            margin: 100px auto;
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        .auth-container h2 { margin-bottom: 20px; color: #333; text-align: center; }
+        .auth-container input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .auth-container button {
+            width: 100%;
+            padding: 12px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        .auth-container button:hover { background: #5568d3; }
+        .auth-toggle { text-align: center; margin-top: 15px; color: #666; }
+        .auth-toggle a { color: #667eea; cursor: pointer; text-decoration: none; }
+        .error-msg { color: #dc3545; font-size: 14px; margin-bottom: 10px; text-align: center; }
+        
+        /* Main App */
+        .app-container { max-width: 1200px; margin: 0 auto; display: none; }
+        .header {
+            background: white;
+            padding: 20px 30px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header h1 { color: #333; font-size: 28px; }
+        .user-info { display: flex; align-items: center; gap: 15px; }
+        .username { color: #666; font-weight: 500; }
+        .logout-btn {
+            padding: 8px 16px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .stat-card h3 { font-size: 14px; color: #666; margin-bottom: 10px; }
+        .stat-card .number { font-size: 32px; font-weight: bold; color: #667eea; }
+        
+        /* Main Content */
+        .main-content {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 20px;
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            height: fit-content;
+        }
+        .sidebar h3 { margin-bottom: 15px; color: #333; }
+        .filter-group { margin-bottom: 20px; }
+        .filter-group label { display: block; margin-bottom: 8px; color: #666; font-size: 14px; }
+        .filter-group select, .filter-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        /* Task Area */
+        .task-area {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        /* Add Task Form */
+        .add-task-form {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+        }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
+        .form-group { display: flex; flex-direction: column; }
+        .form-group label { margin-bottom: 5px; color: #666; font-size: 14px; font-weight: 500; }
+        .form-group input, .form-group select, .form-group textarea {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+        .form-group textarea { resize: vertical; min-height: 60px; }
+        .add-btn {
+            padding: 12px 24px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            width: 100%;
+        }
+        .add-btn:hover { background: #218838; }
+        
+        /* Task List */
+        .task-list { list-style: none; }
+        .task-item {
+            background: #fff;
+            border: 1px solid #e9ecef;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+        .task-item:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); transform: translateY(-2px); }
+        .task-item.completed { opacity: 0.6; }
+        
+        .task-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+        .task-checkbox {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            margin-top: 2px;
+        }
+        .task-content { flex: 1; }
+        .task-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        .task-item.completed .task-title { text-decoration: line-through; color: #999; }
+        .task-description { color: #666; font-size: 14px; margin-bottom: 10px; }
+        
+        .task-meta {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+        }
+        .badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .badge-category { background: #e3f2fd; color: #1976d2; }
+        .badge-priority-high { background: #ffebee; color: #c62828; }
+        .badge-priority-medium { background: #fff3e0; color: #ef6c00; }
+        .badge-priority-low { background: #e8f5e9; color: #2e7d32; }
+        .badge-due { background: #f3e5f5; color: #7b1fa2; }
+        .badge-overdue { background: #ffcdd2; color: #c62828; }
+        
+        .task-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .btn-edit, .btn-delete {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        .btn-edit { background: #007bff; color: white; }
+        .btn-edit:hover { background: #0056b3; }
+        .btn-delete { background: #dc3545; color: white; }
+        .btn-delete:hover { background: #c82333; }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal.active { display: flex; }
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .modal-header h2 { color: #333; }
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+        .empty-state svg {
+            width: 100px;
+            height: 100px;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content { grid-template-columns: 1fr; }
+            .form-row { grid-template-columns: 1fr; }
+            .stats-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Auth Screen -->
+    <div class="auth-container" id="authScreen">
+        <h2 id="authTitle">Login</h2>
+        <div class="error-msg" id="authError"></div>
+        <input type="text" id="authUsername" placeholder="Username" />
+        <input type="password" id="authPassword" placeholder="Password" />
+        <button onclick="handleAuth()" id="authButton">Login</button>
+        <div class="auth-toggle">
+            <span id="authToggleText">Don't have an account?</span>
+            <a onclick="toggleAuthMode()">Sign up</a>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div class="app-container" id="appScreen">
+        <div class="header">
+            <h1>📋 Task Manager</h1>
+            <div class="user-info">
+                <span class="username" id="currentUser"></span>
+                <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
+        </div>
+
+        <div class="stats-grid" id="statsGrid"></div>
+
+        <div class="main-content">
+            <div class="sidebar">
+                <h3>Filters</h3>
+                <div class="filter-group">
+                    <label>Search</label>
+                    <input type="text" id="searchInput" placeholder="Search tasks..." oninput="loadTasks()" />
+                </div>
+                <div class="filter-group">
+                    <label>Category</label>
+                    <select id="categoryFilter" onchange="loadTasks()">
+                        <option value="all">All Categories</option>
+                        <option value="general">General</option>
+                        <option value="work">Work</option>
+                        <option value="personal">Personal</option>
+                        <option value="shopping">Shopping</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Status</label>
+                    <select id="statusFilter" onchange="loadTasks()">
+                        <option value="all">All Tasks</option>
+                        <option value="pending">Pending</option>
+                        <option value="completed">Completed</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="task-area">
+                <div class="add-task-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Task Title *</label>
+                            <input type="text" id="taskTitle" placeholder="Enter task title" />
+                        </div>
+                        <div class="form-group">
+                            <label>Category</label>
+                            <select id="taskCategory">
+                                <option value="general">General</option>
+                                <option value="work">Work</option>
+                                <option value="personal">Personal</option>
+                                <option value="shopping">Shopping</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Priority</label>
+                            <select id="taskPriority">
+                                <option value="low">Low</option>
+                                <option value="medium" selected>Medium</option>
+                                <option value="high">High</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Due Date</label>
+                            <input type="date" id="taskDueDate" />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea id="taskDescription" placeholder="Add task description..."></textarea>
+                    </div>
+                    <button class="add-btn" onclick="addTask()">➕ Add Task</button>
+                </div>
+
+                <ul class="task-list" id="taskList"></ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div class="modal" id="editModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Edit Task</h2>
+                <button class="close-modal" onclick="closeEditModal()">×</button>
+            </div>
+            <div class="form-group">
+                <label>Title</label>
+                <input type="text" id="editTitle" />
+            </div>
+            <div class="form-group">
+                <label>Description</label>
+                <textarea id="editDescription"></textarea>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Category</label>
+                    <select id="editCategory">
+                        <option value="general">General</option>
+                        <option value="work">Work</option>
+                        <option value="personal">Personal</option>
+                        <option value="shopping">Shopping</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Priority</label>
+                    <select id="editPriority">
+                        <option value="low">Low</option>
+                        <option value="medium">Medium</option>
+                        <option value="high">High</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Due Date</label>
+                <input type="date" id="editDueDate" />
+            </div>
+            <button class="add-btn" onclick="saveEdit()">Save Changes</button>
+        </div>
+    </div>
+
+    <script>
+        let token = localStorage.getItem('token');
+        let username = localStorage.getItem('username');
+        let isLoginMode = true;
+        let editingTaskId = null;
+
+        // Auth functions
+        function toggleAuthMode() {
+            isLoginMode = !isLoginMode;
+            document.getElementById('authTitle').textContent = isLoginMode ? 'Login' : 'Sign Up';
+            document.getElementById('authButton').textContent = isLoginMode ? 'Login' : 'Sign Up';
+            document.getElementById('authToggleText').textContent = isLoginMode ? "Don't have an account?" : "Already have an account?";
+            document.getElementById('authError').textContent = '';
+        }
+
+        async function handleAuth() {
+            const username = document.getElementById('authUsername').value.trim();
+            const password = document.getElementById('authPassword').value;
+            const errorEl = document.getElementById('authError');
+
+            if (!username || !password) {
+                errorEl.textContent = 'Please fill in all fields';
+                return;
+            }
+
+            const endpoint = isLoginMode ? '/api/login' : '/api/register';
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    localStorage.setItem('token', data.access_token);
+                    localStorage.setItem('username', data.username);
+                    token = data.access_token;
+                    showApp();
+                } else {
+                    errorEl.textContent = data.error || 'Authentication failed';
+                }
+            } catch (error) {
+                errorEl.textContent = 'Connection error';
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('username');
+            token = null;
+            document.getElementById('authScreen').style.display = 'block';
+            document.getElementById('appScreen').style.display = 'none';
+        }
+
+        function showApp() {
+            document.getElementById('authScreen').style.display = 'none';
+            document.getElementById('appScreen').style.display = 'block';
+            document.getElementById('currentUser').textContent = localStorage.getItem('username');
+            loadStats();
+            loadTasks();
+        }
+
+        // Stats
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/stats', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const stats = await response.json();
+                
+                document.getElementById('statsGrid').innerHTML = `
+                    <div class="stat-card">
+                        <h3>Total Tasks</h3>
+                        <div class="number">${stats.total}</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Completed</h3>
+                        <div class="number" style="color: #28a745;">${stats.completed}</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Pending</h3>
+                        <div class="number" style="color: #ffc107;">${stats.pending}</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Overdue</h3>
+                        <div class="number" style="color: #dc3545;">${stats.overdue}</div>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Failed to load stats:', error);
+            }
+        }
+
+        // Tasks
+        async function loadTasks() {
+            const category = document.getElementById('categoryFilter').value;
+            const status = document.getElementById('statusFilter').value;
+            const search = document.getElementById('searchInput').value;
+
+            let url = '/api/tasks?';
+            if (category !== 'all') url += `category=${category}&`;
+            if (status !== 'all') url += `status=${status}&`;
+            if (search) url += `search=${search}`;
+
+            try {
+                const response = await fetch(url, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const tasks = await response.json();
+                renderTasks(tasks);
+            } catch (error) {
+                console.error('Failed to load tasks:', error);
+            }
+        }
+
+        function renderTasks(tasks) {
+            const taskList = document.getElementById('taskList');
+            
+            if (tasks.length === 0) {
+                taskList.innerHTML = `
+                    <div class="empty-state">
+                        <svg fill="currentColor" viewBox="0 0 20 20"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/><path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"/></svg>
+                        <h3>No tasks found</h3>
+                        <p>Create your first task to get started!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            taskList.innerHTML = tasks.map(task => {
+                const isOverdue = task.due_date && new Date(task.due_date) < new Date() && !task.completed;
+                return `
+                    <li class="task-item ${task.completed ? 'completed' : ''}">
+                        <div class="task-header">
+                            <input type="checkbox" class="task-checkbox" ${task.completed ? 'checked' : ''} 
+                                   onchange="toggleTask('${task._id}', this.checked)">
+                            <div class="task-content">
+                                <div class="task-title">${task.title}</div>
+                                ${task.description ? `<div class="task-description">${task.description}</div>` : ''}
+                                <div class="task-meta">
+                                    <span class="badge badge-category">${task.category}</span>
+                                    <span class="badge badge-priority-${task.priority}">${task.priority}</span>
+                                    ${task.due_date ? `<span class="badge ${isOverdue ? 'badge-overdue' : 'badge-due'}">
+                                        ${isOverdue ? '⚠️ ' : '📅 '}${new Date(task.due_date).toLocaleDateString()}
+                                    </span>` : ''}
+                                </div>
+                                <div class="task-actions">
+                                    <button class="btn-edit" onclick='editTask(${JSON.stringify(task)})'>Edit</button>
+                                    <button class="btn-delete" onclick="deleteTask('${task._id}')">Delete</button>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+                `;
+            }).join('');
+        }
+
+        async function addTask() {
+            const title = document.getElementById('taskTitle').value.trim();
+            if (!title) {
+                alert('Please enter a task title');
+                return;
+            }
+
+            const task = {
+                title,
+                description: document.getElementById('taskDescription').value,
+                category: document.getElementById('taskCategory').value,
+                priority: document.getElementById('taskPriority').value,
+                due_date: document.getElementById('taskDueDate').value || null
+            };
+
+            try {
+                await fetch('/api/tasks', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(task)
+                });
+
+                // Clear form
+                document.getElementById('taskTitle').value = '';
+                document.getElementById('taskDescription').value = '';
+                document.getElementById('taskDueDate').value = '';
+                
+                loadStats();
+                loadTasks();
+            } catch (error) {
+                alert('Failed to add task');
+            }
+        }
+
+        async function toggleTask(id, completed) {
+            try {
+                await fetch(`/api/tasks/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ completed })
+                });
+                loadStats();
+                loadTasks();
+            } catch (error) {
+                alert('Failed to update task');
+            }
+        }
+
+        function editTask(task) {
+            editingTaskId = task._id;
+            document.getElementById('editTitle').value = task.title;
+            document.getElementById('editDescription').value = task.description || '';
+            document.getElementById('editCategory').value = task.category;
+            document.getElementById('editPriority').value = task.priority;
+            document.getElementById('editDueDate').value = task.due_date || '';
+            document.getElementById('editModal').classList.add('active');
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').classList.remove('active');
+            editingTaskId = null;
+        }
+
+        async function saveEdit() {
+            const updates = {
+                title: document.getElementById('editTitle').value,
+                description: document.getElementById('editDescription').value,
+                category: document.getElementById('editCategory').value,
+                priority: document.getElementById('editPriority').value,
+                due_date: document.getElementById('editDueDate').value || null
+            };
+
+            try {
+                await fetch(`/api/tasks/${editingTaskId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(updates)
+                });
+                closeEditModal();
+                loadTasks();
+            } catch (error) {
+                alert('Failed to update task');
+            }
+        }
+
+        async function deleteTask(id) {
+            if (!confirm('Are you sure you want to delete this task?')) return;
+
+            try {
+                await fetch(`/api/tasks/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                loadStats();
+                loadTasks();
+            } catch (error) {
+                alert('Failed to delete task');
+            }
+        }
+
+        // Enter key handlers
+        document.getElementById('authPassword').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') handleAuth();
+        });
+
+        document.getElementById('taskTitle').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addTask();
+        });
+
+        // Initialize
+        if (token) {
+            showApp();
+        }
+    </script>
+</body>
+</html>
