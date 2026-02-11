@@ -1,0 +1,58 @@
+pipeline {
+    agent { label 'app-node' }
+
+    environment {
+        ACR_LOGIN_SERVER = "twotiewapp.azurecr.io"
+        IMAGE_NAME = "tow-tier-app"
+        IMAGE_TAG = "latest"
+    }
+
+    stages {
+
+        stage('Clone Code') {
+            steps {
+                git branch: 'main',
+                    url: 'https://github.com/jatavkapil123/Tow-Tier-Application.git'
+            }
+        }
+
+        stage('Build Image') {
+            steps {
+                sh '''
+                docker build -t $IMAGE_NAME:$IMAGE_TAG .
+                docker tag $IMAGE_NAME:$IMAGE_TAG $ACR_LOGIN_SERVER/$IMAGE_NAME:$IMAGE_TAG
+                '''
+            }
+        }
+
+        stage('Login to ACR') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'acr-cred',
+                    usernameVariable: 'ACR_USER',
+                    passwordVariable: 'ACR_PASS'
+                )]) {
+                    sh '''
+                    echo $ACR_PASS | docker login $ACR_LOGIN_SERVER -u $ACR_USER --password-stdin
+                    '''
+                }
+            }
+        }
+
+        stage('Push Image') {
+            steps {
+                sh 'docker push $ACR_LOGIN_SERVER/$IMAGE_NAME:$IMAGE_TAG'
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                sh '''
+                docker-compose down || true
+                docker-compose pull
+                docker-compose up -d
+                '''
+            }
+        }
+    }
+}
