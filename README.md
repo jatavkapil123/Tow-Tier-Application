@@ -29,7 +29,7 @@ A production-ready, enterprise-grade two-tier task management application deploy
 
 ## 🏗️ Architecture Overview
 
-![Architecture Diagram](docs/architecture-diagram.png)
+![Architecture Diagram](images/ar1.png)
 
 ### High-Level Architecture
 
