@@ -81,6 +81,7 @@ User → Load Balancer (Public) → App Server (Private) → Database Server (Pr
 
 ### Frontend
 ![Frontend](images/ar2.png)
+![Frontend](images/ar3.png)
 - HTML5, CSS3, JavaScript (Vanilla)
 - Responsive Design
 - AJAX for API communication
